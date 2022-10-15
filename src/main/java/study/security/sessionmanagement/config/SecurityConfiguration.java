@@ -13,6 +13,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
@@ -63,6 +66,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
+    public SessionRegistry sessionRegistry() {
+        SessionRegistryImpl registry = new SessionRegistryImpl();
+        return registry;
+    }
+
+    @Bean
     public PersistentTokenRepository tokenRepository() {
         JdbcTokenRepositoryImpl repository = new JdbcTokenRepositoryImpl();
         repository.setDataSource(dataSource);
@@ -81,6 +90,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 userService,
                 tokenRepository()
         );
+        service.setAlwaysRemember(true);
         return service;
     }
 
@@ -100,26 +110,32 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .antMatchers("/").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin().loginPage("/login")
-                .loginProcessingUrl("/loginprocess")
-                .permitAll()
-                .defaultSuccessUrl("/", false)
-                .failureUrl("/login-error")
-                .and()
-                .logout().logoutSuccessUrl("/")
-                .and()
-                .exceptionHandling().accessDeniedPage("/access-denied")
-                .and()
-                .rememberMe().rememberMeServices(rememberMeServices())
+                    .antMatchers("/").permitAll()
+                    .anyRequest().authenticated()
+                .and().formLogin()
+                    .loginPage("/login")
+                    .loginProcessingUrl("/loginprocess").permitAll()
+                    .defaultSuccessUrl("/", false)
+                    .failureUrl("/login-error")
+                .and().logout()
+                    .logoutSuccessUrl("/")
+                .and().exceptionHandling()
+                    .accessDeniedPage("/access-denied")
+                .and().rememberMe()
+                    .rememberMeServices(rememberMeServices())
+                .and().sessionManagement()
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .sessionFixation().changeSessionId()
+                    .maximumSessions(1)
+                    .maxSessionsPreventsLogin(false)
+                    .expiredUrl("/session-expired")
         ;
     }
 
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring()
+                .antMatchers("/sessions", "/session/expire", "/sessionExpired")
                 .requestMatchers(
                         PathRequest.toStaticResources().atCommonLocations()
                 );
