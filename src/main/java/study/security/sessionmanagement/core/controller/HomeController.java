@@ -35,6 +35,11 @@ public class HomeController {
         return "accessDenied";
     }
 
+    @GetMapping("/access-denied2")
+    public String accessDenied2(){
+        return "accessDenied2";
+    }
+
     @PreAuthorize("hasAnyAuthority('ROLE_USER')")
     @GetMapping("/user-page")
     public String userPage(){
@@ -43,10 +48,10 @@ public class HomeController {
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     @GetMapping("/admin-page")
-    public String adminPage(){
+    public String adminPage() throws YouCannotAccessUserPage {
+        /*if (true) throw new YouCannotAccessUserPage();*/
         return "adminPage";
     }
-
 
     @ResponseBody
     @GetMapping("/auth")

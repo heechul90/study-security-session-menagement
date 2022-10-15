@@ -121,7 +121,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                     .antMatchers("/").permitAll()
-                    .antMatchers("/admin/**").hasRole("ROLE_ADMIN")
+//                    .antMatchers("/admin/**").hasRole("ROLE_ADMIN")
                     .anyRequest().authenticated()
                 .and().formLogin()
                     .loginPage("/login")
@@ -132,6 +132,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                     .logoutSuccessUrl("/")
                 .and().exceptionHandling()
                     .accessDeniedPage("/access-denied")
+//                    .accessDeniedHandler(new CustomDeniedHandler())
                 .and().rememberMe()
                     .rememberMeServices(rememberMeServices())
                 .and().sessionManagement()
