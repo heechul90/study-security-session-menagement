@@ -7,6 +7,7 @@ import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,8 +15,10 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
@@ -24,6 +27,7 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import study.security.sessionmanagement.core.service.UserService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSessionEvent;
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
@@ -89,7 +93,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 "hello",
                 userService,
                 tokenRepository()
-        );
+        )/* {
+            @Override
+            protected Authentication createSuccessfulAuthentication(HttpServletRequest request, UserDetails user) {
+                return new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+//                return super.createSuccessfulAuthentication(request, user);
+            }
+        }*/;
         service.setAlwaysRemember(true);
         return service;
     }
@@ -111,6 +121,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                     .antMatchers("/").permitAll()
+                    .antMatchers("/admin/**").hasRole("ROLE_ADMIN")
                     .anyRequest().authenticated()
                 .and().formLogin()
                     .loginPage("/login")
